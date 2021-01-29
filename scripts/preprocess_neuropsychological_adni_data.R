@@ -9,14 +9,7 @@ setwd("~/neuropsycho_adni/")
 library(dplyr)
 library(ADNIMERGE)
 
-# Function to detect double registers RID-VISCODE
-reg2del <- function(DF){
-  tmp <- with(DF, table(RID, VISCODE))
-  idx <- which(tmp > 1, arr.ind = TRUE)
-  nam <- dimnames(tmp[idx[,1],idx[,2]])
-  l <- paste(DF$RID, DF$VISCODE, sep=":") %in% paste(nam$RID, nam$VISCODE, sep=":")
-  return(l)
-}
+source("scripts/auxiliar_functions_adni_data.R")
 
 # Init Data frames and lists
 DF <- data.frame()
@@ -336,14 +329,12 @@ selitems$FCI <- c("MC_SCORE", "FC_SCORE", "SNGLCHKSCORE", "COMPLXCHKSCORE", "BAN
 seltotals$FCI <- c("FCITOTAL")
 # rm(FCI)
 
+save(DF, selitems, seltotals, file = "processed_data/neuropsycho_seltests.RData")
+
 rm(ADAS, ANART, AVLT, BNT, CATFL,CDR, CLOCK, FAQ, FCI, LM, MINT, MMSE, MOCA, TMT, BNTMINT, 
    clock_itnames, fci_itnames, mmse_itnames, mmse_itwo, moca_itnames,
    reg2del, faq2number)
 
-save(DF, selitems, seltotals, file = "~/ADNI_meta_oct2018/processed_data/neuropsycho_seltests.RData")
-
 rm(DF, selitems, seltotals)
 
-# Cogstate	Brief	Battery	(CBB)	Computerized	Testing for ADNI3 -> No viscode
-# Everyday	Cognition (Self report and partner) from ADNI 3 -> compared to 10 years :/
 
