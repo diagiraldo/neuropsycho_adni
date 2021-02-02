@@ -90,3 +90,27 @@ scores.boxplots2 <- function(S, namesfac, nam = c("variable", "value", "group"),
     }
     return(p)
 }
+
+# Function to plot survival curves
+survival.plot <- function(fitsv, data, k){
+    p <- ggsurvplot(fitsv, data = data, size = 0.5,
+                    pval = TRUE, pval.size = 4,
+                    conf.int = TRUE, conf.int.alpha = 0.05,
+                    linetype = "strata",
+                    legend.title = "MCI subgroup",
+                    legend.labs = as.character(1:k),
+                    xlab = "Time (months)", xlim = c(0, 96),
+                    ylab = "No progression probability",
+                    axes.offset = TRUE,
+                    break.time.by = 12,
+                    risk.table = TRUE,
+                    ggtheme = theme_bw())
+    p$plot <- p$plot + theme(panel.border = element_rect(colour = "black", fill = NA), 
+                             plot.background = element_rect(fill = "transparent", colour = NA)) +
+        annotate("segment", x = 60, xend = 60, y = 0, yend = 1,  colour="gray40", linetype = "dotted")
+    p$table <- p$table + theme(panel.border = element_rect(colour = "transparent", fill = NA),
+                               plot.background = element_rect(fill = "transparent", colour = NA),
+                               plot.title = element_text(hjust = 0, size = 12), axis.line = element_blank()) +
+        xlab("")
+    return(p$plot)
+}

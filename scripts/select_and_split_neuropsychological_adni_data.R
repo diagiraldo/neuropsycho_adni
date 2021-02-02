@@ -39,19 +39,6 @@ A$new.n.rev = sapply(A$RID, function(x) sum(diff(DX$cod.DX[DX$RID == x & !is.na(
 A$new.vis.change = sapply(A$RID, function(x) DX$VISMONTH[DX$RID == x & !is.na(DX$DIAGNOSIS)][which(diff(DX$cod.DX[DX$RID == x & !is.na(DX$DIAGNOSIS)]) != 0)[1] + 1])
 A$new.time.change = A$new.vis.change - A$FIRSTVIS
 
-###############
-# Split groups
-###############
-
-splitFA <- 0.5
-set.seed(1995) # Release of Toy Story 1 ;)
-
-setFA <- A$RID[A$new.months.fu < 12 | A$DIAGNOSIS == "Dementia"]
-setFA <- c(setFA, sample(setdiff(A$RID, setFA), size = round(length(A$RID)*splitFA)-length(setFA)))
-setEVAL <- setdiff(A$RID, setFA)
-A <- mutate(A, set1 = ifelse(RID %in% setFA, "FA", "EVAL"))
-rm(setFA, setEVAL)
-
 # Include covariates and filter data
 A <- A %>% 
     merge(dplyr::select(D, RID, PTEDUCAT, AGE.bl, PTGENDER), all.x = TRUE) %>%
@@ -60,24 +47,15 @@ A <- A %>%
     filter(DIAGNOSIS != "Dementia")
 rm(D, DX)
 
-# Reasign groups
-setSTD <- A$RID[A$DIAGNOSIS == "CN" & A$set1 == "EVAL"]
-setCFA <- setdiff(A$RID[A$DIAGNOSIS == "CN"], setSTD)
-setEVAL <- A$RID[A$DIAGNOSIS == "MCI" & A$set1 == "EVAL"]
+#########################
+# Include data partition
+#########################
 
-splitmci <- 0.6
-nmci <- sum(A$DIAGNOSIS == "MCI") 
-set.seed(123) 
-tmp <- sample(setdiff(A$RID[A$DIAGNOSIS == "MCI" & A$new.months.fu > 12], setEVAL),
-              size = round(nmci*splitmci - length(setEVAL)))
-setEVAL <- c(setEVAL, tmp)
-setCFA <- c(setCFA, setdiff(A$RID[A$DIAGNOSIS == "MCI"], setEVAL))
+tmp <- read.csv("data_partition.csv", stringsAsFactors = FALSE)
+names(tmp)[2] <- "set"
+A <- merge(A, tmp) 
 
-A <- mutate(A, set = ifelse(RID %in% setSTD, 
-                            "STD", ifelse(RID %in% setCFA, "FA", "EVAL")))
-
-with(A, table(DIAGNOSIS, set))
-rm(tmp, setSTD, setCFA, setEVAL)
+with(A, table(set, DIAGNOSIS))
 
 # Save data first visit
 save(A, it, file = "processed_data/selsubscores_firstvisit.RData")

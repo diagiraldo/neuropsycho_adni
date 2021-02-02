@@ -77,7 +77,7 @@ write.table(W1, file = "results/weights_for_domainscores.csv", sep = ",", row.na
 S <- lavPredict(fitcfa, newdata = A_srb, method = "Bartlett") %>%
     as.data.frame() %>%
     cbind(dplyr::select(A_srb, c(1:6, DIAGNOSIS:set))) %>%
-    mutate(DIAGNOSIS = factor(DIAGNOSIS, levels = c("Dementia", "MCI", "CN")))
+    mutate(DIAGNOSIS = factor(DIAGNOSIS, levels = c("MCI", "CN")))
 
 namesfac <- colnames(inspect(fitcfa)$lambda)
 pl <- scores.boxplots(filter(S, set == "FA"), namesfac, nam = c("Domain", "Score", "Diagnostic Group: "), flip = TRUE)
@@ -85,16 +85,24 @@ pl
 
 save(S, namesfac, file = "processed_data/domain_scores_srb_firstvisit.RData")
 
-# Compare dds between CN and MCI
+# Compare domain scores between CN and MCI
 library(rcompanion)
 n_tests <- 6
+grcomp <- data.frame(comp = character(n_tests), pval = numeric(n_tests), r = numeric (n_tests), stringsAsFactors = FALSE)
 
-i <- 6
-fmla <- as.formula(paste(namesfac[i], "DIAGNOSIS", sep = " ~ "))
-tmp <- wilcox.test(fmla, data = S)
-tmp$data.name
-tmp$p.value*n_tests # Bonferroni correction
+for (i in 1:n_tests){
+    fmla <- as.formula(paste(namesfac[i], "DIAGNOSIS", sep = " ~ "))
+    tmp <- wilcox.test(fmla, data = S)
+    grcomp$comp[i] <- as.character(tmp$data.name)
+    grcomp$pval[i] <- tmp$p.value
+    x <- S[, which(names(S) == namesfac[i])]
+    g <- S$DIAGNOSIS
+    tmp <- wilcoxonR(x, g, ci = TRUE)
+    grcomp$r[i] <- tmp$r[1]
+}
+# Bonferroni correction
+grcomp <- mutate(grcomp,
+                 pval.bonferroni = pval*n_tests)
+write.table(grcomp, file = "results/comparison_domainscores_CN_MCI.csv", sep = ",", row.names = FALSE)
 
-x <- S[, which(names(S) == namesfac[i])]
-g <- as.character(S$DIAGNOSIS)
-wilcoxonR(x, g, ci = TRUE)
+rm(list=ls())
