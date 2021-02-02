@@ -15,4 +15,5 @@ Code for the analysis of neuropsychological data in ADNI
 4. Select first visit with complete information and split data for analyses with `select_and_split_neuropsychological_adni_data.R`
 5. Calculate Standardized Regression Based (SRB) z-scores with `srb_zscores_neuropsychological_adni_data.R`
 6. Perform Confirmatory Factor analysis and calculate domain specific scores with `cfa_with_srb_neuropsychological_adni_data.R`
-7. Cluster analysis using domain scores with `mci_clustering_domain_scores.R`
+7. Cluster analysis using domain scores with `mci_clustering_domain_scores.R`, it includes survival analysis to compare progression risk between MCI sub-groups.
+8. Automated prediction of progresion from MCI to AD dementia with `mci_progression_predicton_domain_scores.R`.
