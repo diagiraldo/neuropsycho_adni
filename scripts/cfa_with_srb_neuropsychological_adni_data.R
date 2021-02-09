@@ -68,9 +68,10 @@ pl
 ggsave("plots/DS_weights_cfa.png", pl, width = 10, height = 16, units = "cm", dpi = 300, bg = "transparent")
 ggsave("plots/DS_weights_cfa.eps", pl, width = 10, height = 16, units = "cm", dpi = 300, bg = "transparent")
 
-W1 <- as.data.frame(t(W)) %>%
+W1 <- as.data.frame(round(t(W), digits = 3)) %>%
     mutate(subscore = colnames(W)) %>%
-    select(c(subscore, rownames(W)))
+    select(c(subscore, rev(rownames(W))))
+W1 <- W1[nrow(W1):1,]
 write.table(W1, file = "results/weights_for_domainscores.csv", sep = ",", row.names = FALSE)
 
 # Calculate domain scores
