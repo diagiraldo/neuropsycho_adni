@@ -129,14 +129,27 @@ pb
 ggsave("plots/Scores_MCIsubgroups_CN.png", pb, width = 16, height = 12, units = "cm", dpi = 300, bg = "transparent")
 ggsave("plots/Scores_MCIsubgroups_CN.eps", pb, width = 16, height = 12, units = "cm", dpi = 300, bg = "transparent")
 
+# Include APOE info 
+library(ADNIMERGE)
+AP <- rbind(dplyr::select(apoeres, ORIGPROT, RID, APGEN1, APGEN2),
+            dplyr::select(apoego2, ORIGPROT, RID, APGEN1, APGEN2),
+            dplyr::select(apoe3, ORIGPROT, RID, APGEN1, APGEN2)) %>%
+    filter(RID %in% MCICN$RID) %>%
+    mutate(apoee4 = (APGEN1 == "4" | APGEN2 == "4"))
+MCICN <- merge(MCICN, dplyr::select(AP, RID, apoee4), all.x = TRUE)
+
 # Subgroups description
 x = c("X", levels(MCICN$GR))
-sdes <- data.frame(matrix(ncol = length(x), nrow = 1))
+sdes <- data.frame(matrix(ncol = length(x), nrow = 2))
 colnames(sdes) <- x
 
 sdes$X[1] <- "female percentage"
 tab <- with(MCICN, table(PTGENDER,GR))
 sdes[1, 2:ncol(sdes)] <- round(tab[1,]/colSums(tab)*100, digits = 2)
+
+sdes$X[2] <- "APOE-e4 percentage"
+tab <- with(MCICN, table(apoee4,GR))
+sdes[2, 2:ncol(sdes)] <- round(tab[2,]/colSums(tab)*100, digits = 2)
 
 for(varn in c("AGE", namesfac)){
     fmla <- as.formula(paste(varn, "GR", sep = " ~ "))
@@ -155,9 +168,9 @@ write.table(sdes, file = "results/description_MCIsubgroups_k4.csv", sep = ",", r
 # Comparison between pairs of groups
 # 10 comparisons between groups x 6 domains
 
-varn <- namesfac[1]
+varn <- namesfac[2]
 fmla <- as.formula(paste(varn, "GR", sep = " ~ "))
-sgr <- c("MCI 1", "MCI 2")
+sgr <- c("MCI 1", "MCI 3")
 
 tmp <- filter(MCICN, GR %in% sgr)
 N <- nrow(tmp)

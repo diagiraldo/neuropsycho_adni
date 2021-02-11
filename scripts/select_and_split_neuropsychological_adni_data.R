@@ -47,6 +47,33 @@ A <- A %>%
     filter(DIAGNOSIS != "Dementia")
 rm(D, DX)
 
+# Include APOE info 
+library(ADNIMERGE)
+AP <- rbind(dplyr::select(apoeres, ORIGPROT, RID, APGEN1, APGEN2),
+            dplyr::select(apoego2, ORIGPROT, RID, APGEN1, APGEN2),
+            dplyr::select(apoe3, ORIGPROT, RID, APGEN1, APGEN2)) %>%
+    filter(RID %in% A$RID) %>%
+    mutate(apoee4 = (APGEN1 == "4" | APGEN2 == "4"))
+A <- merge(A, dplyr::select(AP, RID, apoee4), all.x = TRUE)
+
+# Data description
+
+table(A$DIAGNOSIS)
+
+x = c("X", levels(A$DIAGNOSIS))
+sdes <- data.frame(matrix(ncol = length(x), nrow = 2))
+colnames(sdes) <- x
+
+sdes$X[1] <- "female percentage"
+tab <- with(A, table(PTGENDER,DIAGNOSIS))
+sdes[1, 2:ncol(sdes)] <- round(tab[1,]/colSums(tab)*100, digits = 2)
+
+sdes$X[2] <- "APOE-e4 percentage"
+tab <- with(A, table(apoee4,DIAGNOSIS))
+sdes[2, 2:ncol(sdes)] <- round(tab[2,]/colSums(tab)*100, digits = 2)
+
+sdes
+
 #########################
 # Include data partition
 #########################
