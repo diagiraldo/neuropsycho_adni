@@ -87,6 +87,30 @@ with(A, table(set, DIAGNOSIS))
 # Save data first visit
 save(A, it, file = "processed_data/selsubscores_firstvisit.RData")
 
+# Data description per set
+
+# Include test totals in data description
+# Load test totals for baseline 
+load("processed_data/neuropsycho_seltests.RData")
+sel_tests <- c("ADAS", "MMSE", "CDR")
+tot_tests <- unname(unlist(seltotals[sel_tests]))
+A <- merge(A, dplyr::select(DF, c(1:5, tot_tests)), all.x = TRUE)
+rm(DF, selitems, seltotals)
+
+tmp <- filter(A, DIAGNOSIS == "MCI" & set == "EVAL")
+tab <- with(tmp, table(PTGENDER))
+round(tab/sum(tab)*100, digits = 1)
+round(mean(tmp$AGE), digits = 1)
+round(sd(tmp$AGE), digits = 1)
+tab <- with(tmp, table(apoee4))
+round(tab/sum(tab)*100, digits = 1)
+round(mean(tmp$CDRSB, na.rm = TRUE), digits = 2)
+round(sd(tmp$CDRSB, na.rm = TRUE), digits = 2)
+round(mean(tmp$MMTOTAL, na.rm = TRUE), digits = 1)
+round(sd(tmp$MMTOTAL, na.rm = TRUE), digits = 1)
+round(mean(tmp$TOTAL13, na.rm = TRUE), digits = 1)
+round(sd(tmp$TOTAL13, na.rm = TRUE), digits = 1)
+
 rm(list = ls())
 
 

@@ -121,13 +121,20 @@ CN <- filter(S, DIAGNOSIS == "CN") %>%
 MCICN <- B %>%
     mutate(GR = as.character(GR)) %>%
     rbind(CN) %>%
-    mutate(GR = factor(GR, levels = c("CN", paste("MCI", 1:4))))
+    mutate(GR = factor(GR, levels = c("CN", paste("MCI", 1:4)), labels = c("Cognitively\nunimpaired", paste("MCI", 1:4))))
 
 pb <- scores.boxplots2(MCICN, namesfac, nam = c("Domain", "Score", "Group"), flip = FALSE, by.diagnosis = FALSE) +
     ylim(-2.5, 8.5)
-pb
+    
 ggsave("plots/Scores_MCIsubgroups_CN.png", pb, width = 16, height = 12, units = "cm", dpi = 300, bg = "transparent")
 ggsave("plots/Scores_MCIsubgroups_CN.eps", pb, width = 16, height = 12, units = "cm", dpi = 300, bg = "transparent")
+
+pb <- pb + geom_vline(xintercept = 1.5, linetype="dotted", lwd = 0.25)
+
+ggsave("plots/Scores_MCIsubgroups_CN_revjun2021.png", pb, width = 16, height = 12, units = "cm", dpi = 300, bg = "transparent")
+ggsave("plots/Scores_MCIsubgroups_CN_revjun2021.eps", pb, width = 16, height = 12, units = "cm", dpi = 300, bg = "transparent")
+
+ggsave("~/Documents/proposal-defense/img/Scores_MCIsubgroups_CN.png", pb, width = 12, height =10, units = "cm", dpi = 300, bg = "transparent")
 
 # Include APOE info 
 library(ADNIMERGE)
@@ -192,6 +199,7 @@ pl <- survival.plot(fitsv, B, k = k_clust)
 pl
 ggsave("plots/KMcurves_MCIsubgroups_k4.png", pl, width = 12, height = 10, units = "cm", dpi = 300, bg = "transparent")
 ggsave("plots/KMcurves_MCIsubgroups_k4.eps", pl, width = 12, height = 10, units = "cm", dpi = 300, bg = "transparent")
+ggsave("~/Documents/proposal-defense/img/KMcurves_MCIsubgroups_k4.png", pl, width = 12, height =10, units = "cm", dpi = 300, bg = "transparent")
 
 # Cox model
 fit.coxph <- coxph(surv_object ~ GR + PTGENDER + PTEDUCAT + AGE, data = B)
