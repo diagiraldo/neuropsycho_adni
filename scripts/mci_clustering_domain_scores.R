@@ -31,12 +31,8 @@ B <- S %>%
 ######################################
 # Calculate distance between subjects
 ######################################
-
-# Load factor covariance matrix
-library(lavaan)
-load("results/cfa_parameters.RData")
-factorcov <- inspect(fitcfa, what = "est")$psi
-rm(fitcfa)
+load("results/cfa_estimates.RData")
+factorcov <- LW$Cz
 
 # Get weighted distance
 tmp <- dplyr::select(B, all_of(namesfac))

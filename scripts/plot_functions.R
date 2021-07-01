@@ -114,3 +114,18 @@ survival.plot <- function(fitsv, data, k){
         xlab("")
     return(p$plot)
 }
+
+# Function to plot boxplots of prediction performance values
+MCIpred.boxplot <- function(results, perf_metric, ytext, colvar = "input"){
+    pl <- ggplot(results, aes_string(x = "time", y = perf_metric, colour = colvar)) +
+        geom_boxplot(outlier.size = 0.5) +
+        theme_bw() + 
+        labs(x = "Time period", y = ytext, colour = "RF classifiers\ntrained with: ") +
+        theme(plot.background = element_rect(fill = "transparent",colour = NA),
+              legend.position = "top", legend.background = element_rect(fill = "transparent",colour = NA),
+              legend.margin = ggplot2::margin(0,0,0,0), legend.box.margin = unit(c(0.2,0,0,0), "cm"),
+              plot.margin = unit(c(0,0,0,0), "cm")) +
+        geom_hline(yintercept = 0.5, colour="gray40", linetype = "dotted")
+    return(pl)
+}
+

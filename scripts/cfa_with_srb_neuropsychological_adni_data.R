@@ -3,6 +3,7 @@
 ### With SRB subscores ###################
 ##########################################
 ### D. Giraldo, Sept 2020
+### Modified Jun 2021
 
 setwd("~/neuropsycho_adni")
 
@@ -12,6 +13,7 @@ library(reshape2)
 library(lavaan)
 
 source("scripts/plot_functions.R")
+source("scripts/cfa_functions.R")
 
 # Load data
 load("processed_data/srb_subscores_firstvisit.RData")
@@ -20,20 +22,9 @@ load("processed_data/srb_subscores_firstvisit.RData")
 B <- A_srb %>%
     filter(set == "FA")
 
-# Examine Correlations
-COR <- B %>%
-    dplyr::select(it, -MMNAM, - BMCUED) %>%
-    cor(.)
+# Specify factor model
 
-corr.plot(COR, cut = FALSE, corrange = c(-0.1,1))
-
-# Kaiser-Meyer-Olkin measure of sample adequacy and Bartlett test of sphericity
-library(psych)
-KMO(COR)
-cortest.bartlett(COR, n = nrow(B))
-
-# Confirmatory factor analysis (CFA)
-model1 <- '
+famodel1 <- '
 MEMORY =~ Q1SCORE + Q4SCORE + MOCADLREC + RAVLT.IMMED + AVTOT6 + AVTOTB + AVDEL30MIN + AVDELTOT + LIMMTOTAL + LDELTOTAL + MMRECALL
 LANGUAGE =~ Q5SCORE + MOCANAM + BMNOCUE + CATANIMSC
 EXECUTIVE =~ Q13SCORE + TRAASCOR + TRABSCOR + MOCASERIAL + TRAILS
@@ -41,69 +32,54 @@ VISUOSPATIAL =~ CLOCKSCOR + COPYSCOR + MOCACLOCK + Q3SCORE + CUBE + MMDRAW
 ORIENTATION =~ Q7SCORE + MMORITIME + MMORISPACE + MOCAORI
 ATTENTION =~ Q9SCORE + Q10SCORE + Q11SCORE + Q12SCORE + Q2SCORE
 '
-tmp <- dplyr::select(B, it)
-fitcfa <- cfa(model1, data = tmp, sample.cov = cov(tmp), estimator = "ULS")
-fitMeasures(fitcfa)
+itmod <- its_in_model(famodel1)
 
-save(fitcfa, file = "results/cfa_parameters.RData")
+# Run CFA
+meansub <- colMeans(B[, itmod]) 
+fitcfa1 <- cfa(famodel1, data = B[, itmod], sample.cov = cov(B[, itmod]), estimator = "ULS")
+fitMeasures(fitcfa1)
+s <- lavInspect(fitcfa1, what = "est")
+m <- modindices(fitcfa1, sort = TRUE)
+mloads <- m[m$op == "=~",]
 
-# Examine structure and factor loadings
-L <- inspect(fitcfa, what = "est")$lambda
-pl <- weight.plot(L, nam = c("Sub-score", "Factor", "Factor Loading"), 
-                  valrange = c(0,2.25), flip = TRUE, withvalues = TRUE)
-pl
+# Extract CFA estimates: factor loadings and factor covariance, calculate weights
+LW <- loadings_weights_fcov(fitcfa1)
+namesfac <- colnames(LW$L)
 
-# Extract matrix of weights for domain score calculation
-U2 <- lavInspect(fitcfa, what = "est")$theta
-Uinv <- diag(1/diag(U2))
-tmp <- t(L)%*%(Uinv)
-W <- solve(tmp%*%L)%*%tmp
-colnames(W) <- rownames(L)
-W <- W[rev(1:nrow(W)),]
-W <- W[,rev(1:ncol(W))]
+# Calculate domain composite scores
+# Same result as lavPredict(fitcfa1, newdata = A_srb[,itmod], method = "Bartlett")
+S <- composite_scores(newdata = A_srb, weights = LW$W, centerit = meansub) 
+S <- cbind(dplyr::select(A_srb, c(1:6, DIAGNOSIS:set)), S)
 
-pl <- weight.plot(W, nam = c("Domain score", "Sub-score", "Weight"), 
-                  valrange = c(0,0.5), withvalues = TRUE)
-pl
-ggsave("plots/DS_weights_cfa.png", pl, width = 10, height = 16, units = "cm", dpi = 300, bg = "transparent")
-ggsave("plots/DS_weights_cfa.eps", pl, width = 10, height = 16, units = "cm", dpi = 300, bg = "transparent")
+# Compare domain scores between all CN and MCI participants
+grcomp <- compare_domain_scores(S, vars = namesfac, grvar = "DIAGNOSIS")
 
-W1 <- as.data.frame(round(t(W), digits = 3)) %>%
-    mutate(subscore = colnames(W)) %>%
-    select(c(subscore, rev(rownames(W))))
-W1 <- W1[nrow(W1):1,]
-write.table(W1, file = "results/weights_for_domainscores.csv", sep = ",", row.names = FALSE)
-
-# Calculate domain scores
-S <- lavPredict(fitcfa, newdata = A_srb, method = "Bartlett") %>%
-    as.data.frame() %>%
-    cbind(dplyr::select(A_srb, c(1:6, DIAGNOSIS:set))) %>%
-    mutate(DIAGNOSIS = factor(DIAGNOSIS, levels = c("MCI", "CN")))
-
-namesfac <- colnames(inspect(fitcfa)$lambda)
-pl <- scores.boxplots(filter(S, set == "FA"), namesfac, nam = c("Domain", "Score", "Diagnostic Group: "), flip = TRUE)
-pl
-
+# Save CFA fit and weights
+save(fitcfa1, file = "results/cfa_modelfit.RData")
+save(meansub, LW, file = "results/cfa_estimates.RData")
+# Save Weights in csv
+save_weights_csv(LW$W, "results/weights_for_domainscores.csv")
+# Save domain composite scores
 save(S, namesfac, file = "processed_data/domain_scores_srb_firstvisit.RData")
 
-# Compare domain scores between CN and MCI
-library(rcompanion)
-n_tests <- 6
-grcomp <- data.frame(comp = character(n_tests), pval = numeric(n_tests), r = numeric (n_tests), stringsAsFactors = FALSE)
+# Plot Weights
+pl <- weight.plot(LW$W, nam = c("Domain score", "Sub-score", "Weight"),
+                  valrange = c(0,0.5), withvalues = TRUE)
+ggsave("plots/DS_weights_cfa_revjun2021.png", pl, width = 10, height = 16, units = "cm", dpi = 300, bg = "transparent")
+ggsave("plots/DS_weights_cfa_revjun2021.eps", pl, width = 10, height = 16, units = "cm", dpi = 300, bg = "transparent")
 
-for (i in 1:n_tests){
-    fmla <- as.formula(paste(namesfac[i], "DIAGNOSIS", sep = " ~ "))
-    tmp <- wilcox.test(fmla, data = S)
-    grcomp$comp[i] <- as.character(tmp$data.name)
-    grcomp$pval[i] <- tmp$p.value
-    x <- S[, which(names(S) == namesfac[i])]
-    g <- S$DIAGNOSIS
-    tmp <- wilcoxonR(x, g, ci = TRUE)
-    grcomp$r[i] <- tmp$r[1]
-}
-# Bonferroni correction
-grcomp <- mutate(grcomp,
-                 pval.bonferroni = pval*n_tests)
+# Plot Loadings
+pl <- weight.plot(t(LW$L), nam = c("Factor", "Sub-score", "Loading"),
+                  valrange = c(0,3.1), withvalues = TRUE)
+pl
+ggsave("plots/Factorloadings_cfa_revjun2021.png", pl, width = 10, height = 16, units = "cm", dpi = 300, bg = "transparent")
+ggsave("plots/Factorloadings_cfa_revjun2021.eps", pl, width = 10, height = 16, units = "cm", dpi = 300, bg = "transparent")
+
+# Save Weights in csv
+L <- LW$L
+L <- L[rev(rownames(L)), rev(colnames(L))]
+save_weights_csv(t(L), "results/factor_loadings.csv")
+
+# Save comparisons between groups
 write.table(grcomp, file = "results/comparison_domainscores_CN_MCI.csv", sep = ",", row.names = FALSE)
 
-rm(list=ls())
