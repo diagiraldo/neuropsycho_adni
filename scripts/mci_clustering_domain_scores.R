@@ -103,7 +103,6 @@ pb <- scores.boxplots2(B, namesfac, nam = c("Domain", "Score", "MCI Subgroup"), 
 pb
 
 meds <- mutate(meds, GR = paste("MCI", c(1, 4, 2, 3)))
-meds <- meds[, c(5,1:4)]
 write.table(meds, file = "results/medoids_domainscores_MCIsubgroups_k4.csv", sep = ",", row.names = FALSE)
 
 ####################################################
