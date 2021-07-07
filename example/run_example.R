@@ -1,3 +1,5 @@
+setwd("~/neuropsycho_adni")
+
 source("scripts/example_functions.R")
 load("example/tests_lists.RData")
 
@@ -14,20 +16,19 @@ rm(srbcoef, selitems, seltotals)
 
 # Calculate composite scores
 load("results/cfa_estimates.RData")
-namesfac <- colnames(LW$Cz)
-
+namesfac <- colnames(LW$L)
 S <- composite_scores(newdata = A_srb, weights = LW$W, centerit = meansub) 
 S <- cbind(dplyr::select(A_srb, -all_of(it)), S)
 
 # Assign MCI subgroup
 grmeds <- read.csv("results/medoids_domainscores_MCIsubgroups_k4.csv")
-MCIGR <- distance2meds(S, LW$Cz, grmeds)
+MCIGR <- distance2meds(S, LW$Cz, grmeds, namesfac)
 S <- merge(S, select(MCIGR, ID, GR))
 
 # Predict progression
 library(randomForest)
 load("example/pretrained_RF_MCIprogression_prediction.RData")
-PRED <- predict_MCIprogression(S, RFlist)
+PRED <- predict_MCIprogression(S, RFlist, namesfac)
 S <- merge(S, select(PRED, ID, ends_with("prediction")))
 
 
