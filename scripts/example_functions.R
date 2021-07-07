@@ -78,7 +78,7 @@ composite_scores <- function(newdata, weights, centerit = 0){
 }
 
 # Calculate distances to MCI subgroups medoids
-distance2meds <- function(S, factorcov, grmeds){
+distance2meds <- function(S, factorcov, grmeds, namesfac){
     retdf <- select(S, -all_of(namesfac)) %>%
         mutate(GR = NA)
     tmpdist <- as.data.frame(matrix(NA, nrow = nrow(S), ncol = nrow(grmeds)))
@@ -95,7 +95,7 @@ distance2meds <- function(S, factorcov, grmeds){
 }
 
 # Predict progression to dementia with a list of pre-trained random forest
-predict_MCIprogression <- function(S, RFlist){
+predict_MCIprogression <- function(S, RFlist, namesfac){
     retdf <- select(S, -all_of(namesfac))
     for (i in 1:length(RFlist)){
         tmppred <- as.data.frame(predict(RFlist[[i]], S, type = "prob")) %>%
