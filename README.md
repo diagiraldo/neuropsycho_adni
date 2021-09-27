@@ -3,7 +3,7 @@
 This repository contains:
 
 * Code to calculate the domain composite scores in **new data**, assign a MCI subgroup and predict progression from MCI to dementia within different time windows.
-* Code to reproduce the analysis and results presented in the manuscript *"Quantification of cognitive impairment to characterize heterogeneity of patients at risk of developing Alzheimer’s disease dementia"*
+* Code to reproduce the analysis and results presented in the manuscript [*"Quantification of cognitive impairment to characterize heterogeneity of patients at risk of developing Alzheimer’s disease dementia"*](https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/dad2.12237)
 
 ### Built With
 

@@ -104,6 +104,7 @@ pb
 
 meds <- mutate(meds, GR = paste("MCI", c(1, 4, 2, 3)))
 write.table(meds, file = "results/medoids_domainscores_MCIsubgroups_k4.csv", sep = ",", row.names = FALSE)
+write.table(B, file = "processed_data/mcipartition_evalset.csv", sep = ",", row.names = FALSE)
 
 ####################################################
 # Subgroups description with controls as reference
@@ -130,6 +131,7 @@ ggsave("plots/Scores_MCIsubgroups_CN_revjun2021.png", pb, width = 16, height = 1
 ggsave("plots/Scores_MCIsubgroups_CN_revjun2021.eps", pb, width = 16, height = 12, units = "cm", dpi = 300, bg = "transparent")
 
 ggsave("~/Documents/proposal-defense/img/Scores_MCIsubgroups_CN.png", pb, width = 12, height =10, units = "cm", dpi = 300, bg = "transparent")
+
 
 # Include APOE info 
 library(ADNIMERGE)
